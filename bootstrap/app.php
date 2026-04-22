@@ -11,9 +11,15 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
-    ->withMiddleware(function (Middleware $middleware): void {
-        
-    })
+    ->withMiddleware(function (Middleware $middleware) {
+        // CSRF bypass for API
+        $middleware->validateCsrfTokens(except: [
+            'api/*', 
+        ]);
+
+        // Append CORS Middleware
+        $middleware->append(\Illuminate\Http\Middleware\HandleCors::class);
+    }) // <--- Ye bracket zaroori tha jo miss ho raha tha
     ->withExceptions(function (Exceptions $exceptions): void {
         //
     })->create();
