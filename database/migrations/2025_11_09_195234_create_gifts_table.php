@@ -20,6 +20,7 @@ return new class extends Migration
             $table->boolean('stock');
             $table->decimal('rating', 10, 1)->default(0);
             $table->string('cover')->nullable();
+            $table->string('ad_image')->nullable();
             $table->text('description')->nullable();
             $table->boolean('prescription')->nullable();
             $table->string('mfg');
