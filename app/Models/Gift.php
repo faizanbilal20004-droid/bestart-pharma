@@ -12,6 +12,7 @@ class Gift extends Model
         'deal_price',
         'stock',
         'cover',
+        'ad_image',
         'status',
         'description',
         'rating',
