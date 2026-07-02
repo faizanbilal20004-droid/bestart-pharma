@@ -52,6 +52,7 @@ class GiftController extends Controller
            'deal_price' => 'required',
            'stock' => 'required',
            'cover' => 'required | image | max:2048',
+           'ad_image' => 'nullable | image | max:2048',
            'status' => 'required',
            'description' => 'required',
            'prescription' => 'nullable',
@@ -72,6 +73,17 @@ class GiftController extends Controller
             $path = $request->file('cover')->storeAs('gifts', $fileNameToStore, 'public');
 
             $input['cover'] = '/gifts/'. $fileNameToStore;
+        }
+
+        // 🛠️ Handle Ad Image Upload (Eye button popup image)
+        if($request->hasFile('ad_image')){
+            $adFilenameWithExt = $request->file('ad_image')->getClientOriginalName();
+            $adFilename = pathinfo($adFilenameWithExt, PATHINFO_FILENAME);
+            $adExtension = $request->file('ad_image')->getClientOriginalExtension();
+            $adFileNameToStore = $adFilename . '_ad_' . time() . '.' . $adExtension;
+            $adPath = $request->file('ad_image')->storeAs('gifts', $adFileNameToStore, 'public');
+
+            $input['ad_image'] = '/gifts/' . $adFileNameToStore;
         }
 
         $gift = Gift::create($input);
@@ -107,7 +119,8 @@ class GiftController extends Controller
     {
         $input = $request->all();
         $validator = Validator::make($input, [
-            'cover' => 'image | max:2048'
+            'cover' => 'image | max:2048',
+            'ad_image' => 'nullable | image | max:2048'
         ]);
 
         if($validator->fails()){
@@ -116,6 +129,7 @@ class GiftController extends Controller
 
             // Append your custom error message
             $errors->add('cover', 'Maximum file size to upload is 2MB (2048 KB');
+            $errors->add('ad_image', 'Maximum file size to upload is 2MB (2048 KB)');
 
             return response()->json(['error' => $errors], 422);
         }
@@ -129,9 +143,24 @@ class GiftController extends Controller
             $input['cover'] = '/gifts/' . $fileNameToStore;
         }
 
-        $gift = Gift::find($id)->update($input);
 
-        return response()->json(['success' => 1, 'data' => $gift]);
+        // 🛠️ Update Ad Image
+        if($request->hasFile('ad_image')){
+            $adFilenameWithExt = $request->file('ad_image')->getClientOriginalName();
+            $adFilename = pathinfo($adFilenameWithExt, PATHINFO_FILENAME);
+            $adExtension = $request->file('ad_image')->getClientOriginalExtension();
+            $adFileNameToStore = $adFilename . '_ad_' . time() . '.' . $adExtension;
+            $adPath = $request->file('ad_image')->storeAs('gifts', $adFileNameToStore, 'public');
+            $input['ad_image'] = '/gifts/' . $adFileNameToStore;
+        }
+
+       $gift = Gift::find($id);
+        if ($gift) {
+            $gift->update($input);
+            return response()->json(['success' => 1, 'data' => $gift]);
+        }
+
+        return response()->json(['success' => 0, 'message' => 'Product not found'], 404);
 
     }
 
@@ -142,7 +171,7 @@ class GiftController extends Controller
     {
         $gift = Gift::find($id);
 
-        if($gift->delete()){
+        if($gift && $gift->delete()){
             return response()->json(['success' => 1]);
         }
 
